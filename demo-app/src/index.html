@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>SimpleStorage Demo</title>
+  <!-- ethers.jsのCDNを利用 -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+</head>
+<body>
+  <h1>SimpleStorage Demo</h1>
+  <p id="message">Loading...</p>
+  <input type="text" id="newMessage" placeholder="新しいメッセージを入力" />
+  <button id="updateButton">メッセージ更新</button>
+
+  <script>
+    // ここに、デプロイ後に表示されたコントラクトアドレスを入力してください(Test用)
+    const contractAddress = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266";
+    const contractAbi = [
+      "function message() view returns (string)",
+      "function updateMessage(string newMessage)"
+    ];
+
+    async function init() {
+      if (window.ethereum) {
+        // MetaMask等のウォレット接続要求
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(contractAddress, contractAbi, signer);
+
+        // 現在のメッセージを表示
+        async function updateDisplay() {
+          const msg = await contract.message();
+          document.getElementById("message").textContent = msg;
+        }
+        updateDisplay();
+
+        // ボタン押下で更新
+        document.getElementById("updateButton").addEventListener("click", async () => {
+          const newMsg = document.getElementById("newMessage").value;
+          const tx = await contract.updateMessage(newMsg);
+          await tx.wait();
+          updateDisplay();
+        });
+      } else {
+        alert("MetaMask等のEthereum対応ブラウザ拡張機能のインストールをお願いします。");
+      }
+    }
+    init();
+  </script>
+</body>
+</html>
